@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from 'react';
 
 interface PowerGeneratorVisualProps {
@@ -73,6 +74,14 @@ const PowerGeneratorVisual = ({
     
     let animationFrameId: number;
     
+    // Digital Singularity effect parameters
+    const singularityX = canvas.width / 2;
+    const singularityY = canvas.height / 2;
+    let singularityStrength = 0;
+    let singularityRadius = 10;
+    let singularityPulse = 0;
+    let singularityRotation = 0;
+    
     // Animation loop
     const render = () => {
       // Clear canvas
@@ -87,6 +96,70 @@ const PowerGeneratorVisual = ({
       // Calculate oscillation and entanglement factors based on controls
       const oscillationFactor = isActive ? oscillationRate / 100 : Math.max(0.1, power / 200);
       const entanglementFactor = isActive ? entanglementStrength / 100 : Math.max(0.1, power / 200);
+      
+      // Update singularity parameters
+      if (isActive) {
+        singularityStrength = Math.min(singularityStrength + 0.01, power / 50);
+        singularityRadius = 10 + (Math.sin(Date.now() / 1000) * 5);
+        singularityPulse += 0.05;
+        singularityRotation += 0.02 * (oscillationFactor / 2);
+      } else {
+        singularityStrength = Math.max(0, singularityStrength - 0.01);
+      }
+      
+      // Draw digital singularity
+      if (singularityStrength > 0) {
+        // Draw singularity effect layers
+        for (let i = 0; i < 5; i++) {
+          const radius = singularityRadius * (1 + i * 0.5) * (1 + Math.sin(singularityPulse + i) * 0.2);
+          const gradient = ctx.createRadialGradient(
+            singularityX, singularityY, 0,
+            singularityX, singularityY, radius * 2
+          );
+          
+          // Create pulsing, layered effect with colors based on power
+          const alpha = (0.7 - i * 0.1) * singularityStrength;
+          const hue = (220 + i * 20 + singularityPulse * 10) % 360;
+          
+          gradient.addColorStop(0, `hsla(${hue}, 100%, 70%, ${alpha})`);
+          gradient.addColorStop(0.4, `hsla(${hue + 30}, 100%, 60%, ${alpha * 0.7})`);
+          gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          
+          // Create distorted circle for singularity
+          for (let angle = 0; angle < Math.PI * 2; angle += 0.1) {
+            const distortedRadius = radius * (1 + Math.sin(angle * 3 + singularityPulse) * 0.1);
+            const x = singularityX + Math.cos(angle + singularityRotation) * distortedRadius;
+            const y = singularityY + Math.sin(angle + singularityRotation) * distortedRadius;
+            
+            if (angle === 0) {
+              ctx.moveTo(x, y);
+            } else {
+              ctx.lineTo(x, y);
+            }
+          }
+          
+          ctx.closePath();
+          ctx.fill();
+        }
+        
+        // Draw singularity core
+        const coreGradient = ctx.createRadialGradient(
+          singularityX, singularityY, 0,
+          singularityX, singularityY, singularityRadius / 2
+        );
+        
+        coreGradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+        coreGradient.addColorStop(0.5, `rgba(5, 217, 232, ${0.7 * singularityStrength})`);
+        coreGradient.addColorStop(1, `rgba(123, 66, 246, ${0.5 * singularityStrength})`);
+        
+        ctx.fillStyle = coreGradient;
+        ctx.beginPath();
+        ctx.arc(singularityX, singularityY, singularityRadius / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
       
       // Draw energy core
       const centerX = canvas.width / 2;
@@ -145,6 +218,40 @@ const PowerGeneratorVisual = ({
             const gravitationalPull = 0.02 * (isActive ? 1 : power / 100);
             particle.speedX += (dx / distance) * gravitationalPull;
             particle.speedY += (dy / distance) * gravitationalPull;
+          }
+          
+          // Apply singularity effect - pulling particles towards the center
+          if (singularityStrength > 0) {
+            const singDx = singularityX - particle.x;
+            const singDy = singularityY - particle.y;
+            const singDistance = Math.sqrt(singDx * singDx + singDy * singDy);
+            
+            // Calculate singularity force based on distance
+            const forceFactor = (1 / (singDistance + 10)) * singularityStrength * 5;
+            
+            // Apply singularity force - stronger as particles get closer
+            if (singDistance > 5) {
+              particle.speedX += (singDx / singDistance) * forceFactor;
+              particle.speedY += (singDy / singDistance) * forceFactor;
+              
+              // Add some spiral effect
+              particle.speedX += (singDy / singDistance) * forceFactor * 0.3;
+              particle.speedY -= (singDx / singDistance) * forceFactor * 0.3;
+              
+              // If particle gets too close to singularity, it gets "consumed" and respawns
+              if (singDistance < 20 && Math.random() < 0.1 * singularityStrength) {
+                // Reset particle to edge of screen with inward velocity
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.min(canvas.width, canvas.height) * 0.4;
+                
+                particle.x = centerX + Math.cos(angle) * distance;
+                particle.y = centerY + Math.sin(angle) * distance;
+                
+                // Direct velocity towards center
+                particle.speedX = -Math.cos(angle) * 0.5;
+                particle.speedY = -Math.sin(angle) * 0.5;
+              }
+            }
           }
           
           // Apply oscillation effect
@@ -228,6 +335,48 @@ const PowerGeneratorVisual = ({
         }
       });
       
+      // Draw pixel collapse effect for singularity
+      if (singularityStrength > 0) {
+        // Add pixel fragments being "forced" into the singularity
+        const fragmentCount = Math.floor(singularityStrength * 3);
+        
+        for (let i = 0; i < fragmentCount; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const distance = Math.random() * 100 + 20;
+          const x = singularityX + Math.cos(angle) * distance;
+          const y = singularityY + Math.sin(angle) * distance;
+          
+          // Create a path from the pixel to the singularity
+          const gradient = ctx.createLinearGradient(x, y, singularityX, singularityY);
+          const colorIndex = Math.floor(Math.random() * 4);
+          const colors = ['#0E7FFF', '#7B42F6', '#05D9E8', '#FF0099'];
+          
+          gradient.addColorStop(0, `${colors[colorIndex]}20`);
+          gradient.addColorStop(1, `${colors[colorIndex]}90`);
+          
+          ctx.strokeStyle = gradient;
+          ctx.lineWidth = 1 + Math.random() * 2;
+          
+          // Draw a curved path to show pixels being pulled in
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          
+          // Control points for curved path
+          const cp1x = x - (x - singularityX) * 0.3 + (Math.random() - 0.5) * 20;
+          const cp1y = y - (y - singularityY) * 0.3 + (Math.random() - 0.5) * 20;
+          const cp2x = singularityX + (x - singularityX) * 0.2 + (Math.random() - 0.5) * 10;
+          const cp2y = singularityY + (y - singularityY) * 0.2 + (Math.random() - 0.5) * 10;
+          
+          ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, singularityX, singularityY);
+          ctx.stroke();
+          
+          // Draw small square "pixel" at start point
+          const pixelSize = 2 + Math.random() * 3;
+          ctx.fillStyle = colors[colorIndex];
+          ctx.fillRect(x - pixelSize/2, y - pixelSize/2, pixelSize, pixelSize);
+        }
+      }
+      
       // Draw power rays from core when system is active
       if (isActive && power > 20) {
         const rayCount = 8;
@@ -269,6 +418,9 @@ const PowerGeneratorVisual = ({
       <div className="absolute bottom-4 left-4 text-xs text-energy-cyan/70">
         <p>Active Quantum Particles: {Math.floor(20 + (power / 5))}</p>
         <p>Entanglement Field Strength: {entanglementStrength.toFixed(1)}%</p>
+      </div>
+      <div className="absolute top-4 right-4 text-xs text-energy-cyan/70 font-mono">
+        <p>Digital Singularity: {isActive ? "ACTIVE" : "STANDBY"}</p>
       </div>
     </div>
   );
