@@ -5,7 +5,8 @@ import {
   generateSpherePoints, 
   vortexFieldVector,
   calculateResonance,
-  generateSymmetricPattern
+  generateSymmetricPattern,
+  colorWithOpacity
 } from '../utils/geometryUtils';
 
 interface PowerGeneratorVisualProps {
@@ -463,11 +464,18 @@ const PowerGeneratorVisual = ({
           const distance = Math.sqrt(dx * dx + dy * dy);
           
           if (distance < canvas.width * 0.5) {
-            // Create line gradient
+            // Create line gradient with proper opacity format
             const lineOpacity = Math.max(0.05, Math.min(0.5, (1 - distance / (canvas.width * 0.5)) * entanglementFactor));
+            
+            // Extract colors to create proper gradients with alpha
             const gradient = ctx.createLinearGradient(particle.x, particle.y, entangled.x, entangled.y);
-            gradient.addColorStop(0, `${particle.color}${Math.floor(lineOpacity * 255).toString(16).padStart(2, '0')}`);
-            gradient.addColorStop(1, `${entangled.color}${Math.floor(lineOpacity * 255).toString(16).padStart(2, '0')}`);
+            
+            // Convert hex colors with alpha to rgba
+            const particleColor = particle.color.startsWith('#') ? hexToRgba(particle.color, lineOpacity) : particle.color;
+            const entangledColor = entangled.color.startsWith('#') ? hexToRgba(entangled.color, lineOpacity) : entangled.color;
+            
+            gradient.addColorStop(0, particleColor);
+            gradient.addColorStop(1, entangledColor);
             
             ctx.strokeStyle = gradient;
             ctx.lineWidth = 1 + entanglementFactor * 2;
@@ -478,72 +486,6 @@ const PowerGeneratorVisual = ({
           }
         }
       });
-      
-      // Draw pixel collapse effect for singularity
-      if (singularityStrength > 0) {
-        // Add pixel fragments being "forced" into the singularity
-        const fragmentCount = Math.floor(singularityStrength * 3);
-        
-        for (let i = 0; i < fragmentCount; i++) {
-          const angle = Math.random() * Math.PI * 2;
-          const distance = Math.random() * 100 + 20;
-          const x = singularityX + Math.cos(angle) * distance;
-          const y = singularityY + Math.sin(angle) * distance;
-          
-          // Create a path from the pixel to the singularity
-          const gradient = ctx.createLinearGradient(x, y, singularityX, singularityY);
-          const colorIndex = Math.floor(Math.random() * 4);
-          const colors = ['#0E7FFF', '#7B42F6', '#05D9E8', '#FF0099'];
-          
-          gradient.addColorStop(0, `${colors[colorIndex]}20`);
-          gradient.addColorStop(1, `${colors[colorIndex]}90`);
-          
-          ctx.strokeStyle = gradient;
-          ctx.lineWidth = 1 + Math.random() * 2;
-          
-          // Draw a curved path to show pixels being pulled in
-          ctx.beginPath();
-          ctx.moveTo(x, y);
-          
-          // Control points for curved path
-          const cp1x = x - (x - singularityX) * 0.3 + (Math.random() - 0.5) * 20;
-          const cp1y = y - (y - singularityY) * 0.3 + (Math.random() - 0.5) * 20;
-          const cp2x = singularityX + (x - singularityX) * 0.2 + (Math.random() - 0.5) * 10;
-          const cp2y = singularityY + (y - singularityY) * 0.2 + (Math.random() - 0.5) * 10;
-          
-          ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, singularityX, singularityY);
-          ctx.stroke();
-          
-          // Draw small square "pixel" at start point
-          const pixelSize = 2 + Math.random() * 3;
-          ctx.fillStyle = colors[colorIndex];
-          ctx.fillRect(x - pixelSize/2, y - pixelSize/2, pixelSize, pixelSize);
-        }
-      }
-      
-      // Draw power rays from core when system is active
-      if (isActive && power > 20) {
-        const rayCount = 8;
-        const rayLength = coreRadius * 3 * (power / 100);
-        
-        for (let i = 0; i < rayCount; i++) {
-          const angle = (Math.PI * 2 / rayCount) * i + Date.now() / 2000;
-          const endX = centerX + Math.cos(angle) * rayLength;
-          const endY = centerY + Math.sin(angle) * rayLength;
-          
-          const gradient = ctx.createLinearGradient(centerX, centerY, endX, endY);
-          gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-          gradient.addColorStop(0.2, 'rgba(5, 217, 232, 0.7)');
-          gradient.addColorStop(1, 'rgba(11, 127, 255, 0)');
-          
-          ctx.strokeStyle = gradient;
-          ctx.lineWidth = 2 + (power / 50);
-          ctx.beginPath();
-          ctx.moveTo(centerX, centerY);
-          ctx.lineTo(endX, endY);
-          ctx.stroke();
-        }
-      }
       
       // Draw resonance connections between geometric objects
       if (isActive && power > 60) {
@@ -580,10 +522,14 @@ const PowerGeneratorVisual = ({
                 const screenX2 = centerX + other.x * depth2;
                 const screenY2 = centerY + other.y * depth2;
                 
-                // Draw connection
+                // Extract hue from color strings and create proper hsla gradient
+                const tetraHue = parseInt(tetra.color.substring(4, tetra.color.indexOf(',')));
+                const otherHue = parseInt(other.color.substring(4, other.color.indexOf(',')));
+                
+                // Draw connection with proper HSLA colors
                 const gradient = ctx.createLinearGradient(screenX1, screenY1, screenX2, screenY2);
-                gradient.addColorStop(0, `${tetra.color}80`);
-                gradient.addColorStop(1, `${other.color}80`);
+                gradient.addColorStop(0, colorWithOpacity(tetraHue, 80, 60, 0.5)); // Using 0.5 alpha (equivalent to 80 in hex)
+                gradient.addColorStop(1, colorWithOpacity(otherHue, 80, 60, 0.5));
                 
                 ctx.strokeStyle = gradient;
                 ctx.lineWidth = 1 + power/100;
@@ -633,10 +579,14 @@ const PowerGeneratorVisual = ({
                 const screenX2 = centerX + pyramid.x * depth2;
                 const screenY2 = centerY + pyramid.y * depth2;
                 
-                // Draw energy connection
+                // Extract hue from color strings for proper gradients
+                const sphereHue = parseInt(sphere.color.substring(4, sphere.color.indexOf(',')));
+                const pyramidHue = parseInt(pyramid.color.substring(4, pyramid.color.indexOf(',')));
+                
+                // Draw energy connection with proper HSLA colors
                 const gradient = ctx.createLinearGradient(screenX1, screenY1, screenX2, screenY2);
-                gradient.addColorStop(0, `${sphere.color}80`);
-                gradient.addColorStop(1, `${pyramid.color}80`);
+                gradient.addColorStop(0, colorWithOpacity(sphereHue, 80, 60, 0.5));
+                gradient.addColorStop(1, colorWithOpacity(pyramidHue, 70, 60, 0.5));
                 
                 ctx.strokeStyle = gradient;
                 ctx.lineWidth = 0.5 + power/200;
@@ -705,6 +655,80 @@ const PowerGeneratorVisual = ({
         };
         
         showVortexSymbols();
+      }
+      
+      // Draw pixel collapse effect for singularity
+      if (singularityStrength > 0) {
+        // Add pixel fragments being "forced" into the singularity
+        const fragmentCount = Math.floor(singularityStrength * 3);
+        
+        for (let i = 0; i < fragmentCount; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const distance = Math.random() * 100 + 20;
+          const x = singularityX + Math.cos(angle) * distance;
+          const y = singularityY + Math.sin(angle) * distance;
+          
+          // Create a path from the pixel to the singularity
+          const gradient = ctx.createLinearGradient(x, y, singularityX, singularityY);
+          const colorIndex = Math.floor(Math.random() * 4);
+          const colors = ['#0E7FFF', '#7B42F6', '#05D9E8', '#FF0099'];
+          
+          gradient.addColorStop(0, `${colors[colorIndex]}20`);
+          gradient.addColorStop(1, `${colors[colorIndex]}90`);
+          
+          ctx.strokeStyle = gradient;
+          ctx.lineWidth = 1 + Math.random() * 2;
+          
+          // Draw a curved path to show pixels being pulled in
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          
+          // Control points for curved path
+          const cp1x = x - (x - singularityX) * 0.3 + (Math.random() - 0.5) * 20;
+          const cp1y = y - (y - singularityY) * 0.3 + (Math.random() - 0.5) * 20;
+          const cp2x = singularityX + (x - singularityX) * 0.2 + (Math.random() - 0.5) * 10;
+          const cp2y = singularityY + (y - singularityY) * 0.2 + (Math.random() - 0.5) * 10;
+          
+          ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, singularityX, singularityY);
+          ctx.stroke();
+          
+          // Draw small square "pixel" at start point
+          const pixelSize = 2 + Math.random() * 3;
+          ctx.fillStyle = colors[colorIndex];
+          ctx.fillRect(x - pixelSize/2, y - pixelSize/2, pixelSize, pixelSize);
+        }
+      }
+      
+      // Draw power rays from core when system is active
+      if (isActive && power > 20) {
+        const rayCount = 8;
+        const rayLength = coreRadius * 3 * (power / 100);
+        
+        for (let i = 0; i < rayCount; i++) {
+          const angle = (Math.PI * 2 / rayCount) * i + Date.now() / 2000;
+          const endX = centerX + Math.cos(angle) * rayLength;
+          const endY = centerY + Math.sin(angle) * rayLength;
+          
+          const gradient = ctx.createLinearGradient(centerX, centerY, endX, endY);
+          gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+          gradient.addColorStop(0.2, 'rgba(5, 217, 232, 0.7)');
+          gradient.addColorStop(1, 'rgba(11, 127, 255, 0)');
+          
+          ctx.strokeStyle = gradient;
+          ctx.lineWidth = 2 + (power / 50);
+          ctx.beginPath();
+          ctx.moveTo(centerX, centerY);
+          ctx.lineTo(endX, endY);
+          ctx.stroke();
+        }
+      }
+      
+      // Helper function to convert hex to rgba
+      function hexToRgba(hex: string, alpha: number) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
       }
       
       animationFrameId = requestAnimationFrame(render);

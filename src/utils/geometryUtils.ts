@@ -106,3 +106,8 @@ export const generateSymmetricPattern = (count: number, radius: number, time: nu
   
   return points;
 };
+
+// Helper function to convert HSL color to HSLA with opacity
+export const colorWithOpacity = (hue: number, saturation: number, lightness: number, alpha: number) => {
+  return `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})`;
+};
