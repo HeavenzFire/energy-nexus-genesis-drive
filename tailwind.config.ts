@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,13 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				energy: {
+					'blue': '#0E7FFF',
+					'purple': '#7B42F6',
+					'cyan': '#05D9E8',
+					'magenta': '#FF0099',
+					'glow': '#FFFFFF'
 				}
 			},
 			borderRadius: {
@@ -84,11 +92,36 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-glow': {
+					'0%, 100%': { opacity: '0.7' },
+					'50%': { opacity: '1' }
+				},
+				'oscillate': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-10px)' }
+				},
+				'flow': {
+					'0%': { transform: 'translateX(0)', opacity: '0.8' },
+					'100%': { transform: 'translateX(100px)', opacity: '0.2' }
+				},
+				'rotate-slow': {
+					'0%': { transform: 'rotate(0deg)' },
+					'100%': { transform: 'rotate(360deg)' }
+				},
+				'spin-reverse': {
+					'0%': { transform: 'rotate(0deg)' },
+					'100%': { transform: 'rotate(-360deg)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+				'oscillate': 'oscillate 4s ease-in-out infinite',
+				'flow': 'flow 2s linear infinite',
+				'rotate-slow': 'rotate-slow 8s linear infinite',
+				'spin-reverse': 'spin-reverse 15s linear infinite'
 			}
 		}
 	},
