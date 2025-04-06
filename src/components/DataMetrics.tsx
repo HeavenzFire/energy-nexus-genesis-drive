@@ -9,19 +9,34 @@ interface DataMetricsProps {
 }
 
 const DataMetrics = ({ power, oscillationRate, entanglementStrength, efficiency }: DataMetricsProps) => {
-  // Calculate theoretical energy output
+  // Calculate theoretical energy output with vortex math principles (3-6-9)
   const energyOutput = power * (efficiency / 100) * 2.5;
   
   // Calculate various metrics based on the current state
   const calculateMetrics = () => {
+    // Enhanced quantum flux using 3-6-9 principles
     const quantumFlux = oscillationRate * entanglementStrength / 100;
-    const stability = Math.min(100, 70 + ((efficiency - 50) / 50) * 30);
-    const theoreticalMax = oscillationRate * entanglementStrength * efficiency / (100 * 100);
+    
+    // Stability calculation incorporating vortex math (3-6-9)
+    const vortexFactor = Math.sin((efficiency * 3 + oscillationRate * 6 + entanglementStrength * 9) / 60) * 5;
+    const stability = Math.min(100, 70 + ((efficiency - 50) / 50) * 30 + vortexFactor);
+    
+    // Theoretical max based on nonlinear dynamics
+    const resonanceFactor = 1 + Math.sin(oscillationRate / 10) * 0.3;
+    const theoreticalMax = oscillationRate * entanglementStrength * efficiency * resonanceFactor / (100 * 100);
+    
+    // Calculate resonance harmony based on 3-6-9 sequence
+    const resonanceHarmony = (
+      (((oscillationRate % 9) || 9) + 
+      ((entanglementStrength % 9) || 9) + 
+      ((efficiency % 9) || 9)) / 27
+    ) * 100;
     
     return {
       quantumFlux: quantumFlux.toFixed(2),
       stability: stability.toFixed(1),
-      theoreticalMax: theoreticalMax.toFixed(2)
+      theoreticalMax: theoreticalMax.toFixed(2),
+      resonanceHarmony: resonanceHarmony.toFixed(1)
     };
   };
   
@@ -62,8 +77,8 @@ const DataMetrics = ({ power, oscillationRate, entanglementStrength, efficiency 
           </div>
           
           <div className="bg-black/30 p-3 rounded-lg border border-energy-blue/20">
-            <p className="text-xs text-energy-cyan/70 mb-1">Efficiency Rate</p>
-            <p className="text-lg font-mono text-energy-cyan">{efficiency}%</p>
+            <p className="text-xs text-energy-cyan/70 mb-1">Resonance Harmony</p>
+            <p className="text-lg font-mono text-energy-cyan">{metrics.resonanceHarmony}%</p>
           </div>
         </div>
         
