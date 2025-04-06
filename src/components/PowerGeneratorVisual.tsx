@@ -308,8 +308,6 @@ const PowerGeneratorVisual = ({
       });
       
       // Draw energy core
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
       const coreRadius = Math.min(canvas.width, canvas.height) * 0.15;
       
       // Draw outer glow
