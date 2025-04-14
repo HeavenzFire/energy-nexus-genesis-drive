@@ -111,8 +111,6 @@ export const colorWithOpacity = (hue: number, saturation: number, lightness: num
   return `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})`;
 };
 
-// NEW FUNCTIONS BELOW
-
 // Create an icosahedron - 20 triangular faces, a Platonic solid
 export const createIcosahedron = (size: number) => {
   const phi = (1 + Math.sqrt(5)) / 2; // Golden ratio
